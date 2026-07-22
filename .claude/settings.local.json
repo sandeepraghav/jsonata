@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-ChildItem *)",
+      "PowerShell(Start-Process \"C:\\\\Users\\\\sraghav\\\\myprojs\\\\jsonata\\\\index.html\")",
+      "Bash(node -e ' *)",
+      "PowerShell(npm install *)",
+      "Bash(node *)",
+      "PowerShell(pip install *)",
+      "WebFetch(domain:docs.jsonata.org)"
+    ]
+  }
+}

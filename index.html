@@ -1,0 +1,1981 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JSONata Playground</title>
+<script src="https://cdn.jsdelivr.net/npm/jsonata@2.0.5/jsonata.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0f1117;
+    color: #e2e8f0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  header {
+    background: #1a1d27;
+    border-bottom: 1px solid #2d3148;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-shrink: 0;
+  }
+
+  header h1 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #f97316;
+    letter-spacing: -0.3px;
+  }
+
+  header span {
+    font-size: 12px;
+    color: #64748b;
+  }
+
+  .toolbar {
+    background: #161923;
+    border-bottom: 1px solid #2d3148;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+  }
+
+  select, input[type="text"] {
+    background: #1e2233;
+    border: 1px solid #3d4466;
+    color: #e2e8f0;
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  select:focus, input[type="text"]:focus { border-color: #f97316; }
+
+  select { cursor: pointer; }
+
+  label {
+    font-size: 12px;
+    color: #94a3b8;
+    font-weight: 500;
+  }
+
+  btn, .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+  }
+
+  .btn-primary {
+    background: #f97316;
+    color: #fff;
+  }
+  .btn-primary:hover { background: #ea6c0a; }
+
+  .btn-secondary {
+    background: #1e2233;
+    color: #94a3b8;
+    border: 1px solid #3d4466;
+  }
+  .btn-secondary:hover { background: #252a40; color: #e2e8f0; }
+
+  .btn-danger {
+    background: #7f1d1d;
+    color: #fca5a5;
+    border: 1px solid #991b1b;
+  }
+  .btn-danger:hover { background: #991b1b; }
+
+  .separator { width: 1px; height: 24px; background: #2d3148; }
+
+  .main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    gap: 0;
+  }
+
+  .pane {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+    border-right: 1px solid #2d3148;
+  }
+
+  .pane:last-child { border-right: none; }
+
+  .pane-header {
+    background: #161923;
+    border-bottom: 1px solid #2d3148;
+    padding: 8px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .pane-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #64748b;
+  }
+
+  .pane-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  textarea, .output-box {
+    flex: 1;
+    min-height: 0;
+    background: #13151e;
+    color: #e2e8f0;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    padding: 14px;
+    border: none;
+    resize: none;
+    outline: none;
+    overflow-y: auto;
+    overflow-x: auto;
+    tab-size: 2;
+  }
+
+  #scriptInput {
+    overflow-y: auto;
+    overflow-x: hidden;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+
+  .output-box {
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .output-box.error {
+    color: #f87171;
+  }
+
+  .output-box.success {
+    color: #86efac;
+  }
+
+  /* Script pane extra */
+  .script-area {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .script-selector {
+    padding: 8px 14px;
+    background: #161923;
+    border-bottom: 1px solid #2d3148;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  /* Modal */
+  .modal-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 100;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .modal-backdrop.open { display: flex; }
+
+  .modal {
+    background: #1a1d27;
+    border: 1px solid #3d4466;
+    border-radius: 12px;
+    padding: 24px;
+    width: 520px;
+    max-width: 95vw;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+
+  .modal h2 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #f97316;
+    margin-bottom: 16px;
+  }
+
+  .form-group {
+    margin-bottom: 14px;
+  }
+
+  .form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .form-group input, .form-group textarea, .form-group select {
+    width: 100%;
+    background: #13151e;
+    border: 1px solid #3d4466;
+    color: #e2e8f0;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+  }
+
+  .form-group textarea {
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    min-height: 140px;
+    resize: vertical;
+  }
+
+  .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .status-bar {
+    background: #0d0f17;
+    border-top: 1px solid #2d3148;
+    padding: 4px 14px;
+    font-size: 11px;
+    color: #475569;
+    display: flex;
+    gap: 16px;
+    flex-shrink: 0;
+  }
+
+  .status-bar span { color: #64748b; }
+  .status-bar span.ok { color: #4ade80; }
+  .status-bar span.err { color: #f87171; }
+
+  /* Resizer */
+  .resizer {
+    width: 4px;
+    background: #2d3148;
+    cursor: col-resize;
+    flex-shrink: 0;
+    transition: background 0.15s;
+  }
+  .resizer:hover, .resizer.active { background: #f97316; }
+
+  .tag {
+    display: inline-block;
+    background: #1e3a5f;
+    color: #60a5fa;
+    border-radius: 4px;
+    padding: 1px 7px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .tag.green { background: #14532d; color: #4ade80; }
+  .tag.orange { background: #431407; color: #fb923c; }
+
+  /* Auto-adapt */
+  .btn-adapt-on {
+    background: #14291a;
+    color: #4ade80;
+    border: 1px solid #16a34a;
+  }
+  .btn-adapt-on:hover { background: #1a3320; }
+
+  #adaptBanner {
+    display: none;
+    background: #111a0a;
+    border-bottom: 1px solid #2a4010;
+    padding: 5px 14px;
+    font-size: 11px;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+  }
+  .adapt-label { color: #84cc16; font-weight: 700; white-space: nowrap; }
+  .adapt-chip {
+    background: #1a2e08;
+    border: 1px solid #2a4010;
+    border-radius: 4px;
+    padding: 1px 7px;
+  }
+  .adapt-from { color: #f87171; }
+  .adapt-arrow { color: #475569; }
+  .adapt-to   { color: #86efac; font-weight: 600; }
+  .adapt-restore {
+    margin-left: auto;
+    background: none;
+    border: 1px solid #374151;
+    color: #6b7280;
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 11px;
+    cursor: pointer;
+  }
+  .adapt-restore:hover { color: #e2e8f0; border-color: #6b7280; }
+
+  /* Output mode toggle (JSON / CSV) */
+  .out-mode-toggle {
+    display: flex;
+    border: 1px solid #3d4466;
+    border-radius: 5px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .btn-mode {
+    background: #1e2233;
+    color: #64748b;
+    border: none;
+    padding: 3px 11px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.4px;
+    transition: all 0.15s;
+  }
+  .btn-mode.active { background: #f97316; color: #fff; }
+  .btn-mode:hover:not(.active) { background: #252a40; color: #e2e8f0; }
+
+  .output-box.csv-mode {
+    color: #7dd3fc;
+    white-space: pre;
+    overflow-x: auto;
+    font-size: 12px;
+  }
+  .adapt-none { color: #374151; font-size: 11px; padding: 5px 14px; flex-shrink: 0; display: none; }
+
+  /* Steps pane */
+  #stepsPane {
+    display: none;
+    flex-direction: column;
+    flex-shrink: 0;
+    border-top: 2px solid #1e2d4a;
+    background: #0d0f17;
+  }
+  #stepsHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px 14px;
+    background: #111827;
+    border-bottom: 1px solid #1e2d4a;
+    flex-shrink: 0;
+  }
+  .steps-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #3b82f6;
+  }
+  .steps-toggle {
+    background: none;
+    border: 1px solid #2d3148;
+    color: #475569;
+    border-radius: 4px;
+    font-size: 10px;
+    cursor: pointer;
+    padding: 1px 7px;
+    line-height: 1.6;
+  }
+  .steps-toggle:hover { color: #94a3b8; border-color: #475569; }
+  #stepsBody {
+    max-height: 170px;
+    overflow-y: auto;
+    padding: 8px 14px 10px 14px;
+  }
+  #stepsList {
+    margin: 0;
+    padding-left: 20px;
+    line-height: 1.75;
+  }
+  #stepsList li {
+    font-size: 12px;
+    color: #94a3b8;
+    padding: 1px 0;
+  }
+  #stepsList li code {
+    color: #f97316;
+    background: #1e2235;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 11px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>⚡ JSONata Playground</h1>
+  <span class="tag">v2.0.5</span>
+  <span style="margin-left:auto; font-size:12px;">6 structured samples · 63 scripts · auto-adapt · live</span>
+</header>
+
+<div class="toolbar">
+  <label>Input JSON:</label>
+  <select id="sampleSelect" style="min-width:220px;" onchange="loadSample()"></select>
+  <div class="separator"></div>
+  <label>Script:</label>
+  <select id="scriptSelect" style="min-width:240px;" onchange="loadScript()"></select>
+  <div class="separator"></div>
+  <button class="btn btn-primary" onclick="runTransform()">▶ Apply</button>
+  <button class="btn btn-secondary" onclick="formatJson()">Format JSON</button>
+  <div class="separator"></div>
+  <button class="btn btn-secondary" onclick="openModal('addJson')">+ JSON Sample</button>
+  <button class="btn btn-secondary" onclick="openModal('addScript')">+ Script</button>
+</div>
+
+<div class="main" id="mainArea">
+
+  <!-- Pane 1: Input JSON -->
+  <div class="pane" id="pane1" style="flex:1; min-width:0;">
+    <div class="pane-header">
+      <span class="pane-title">Input JSON</span>
+      <div class="pane-controls">
+        <span id="jsonTag" class="tag">—</span>
+        <button class="btn btn-secondary" style="padding:3px 8px;font-size:11px;" onclick="copyText('jsonInput')">Copy</button>
+      </div>
+    </div>
+    <textarea id="jsonInput" spellcheck="false" placeholder="Paste or select sample JSON..."></textarea>
+  </div>
+
+  <div class="resizer" id="r1"></div>
+
+  <!-- Pane 2: Script -->
+  <div class="pane" id="pane2" style="flex:2; min-width:0;">
+    <div class="pane-header">
+      <span class="pane-title">JSONata Expression</span>
+      <div class="pane-controls">
+        <button id="adaptToggle" class="btn btn-adapt-on" style="padding:3px 9px;font-size:11px;" onclick="toggleAutoAdapt()">⚡ Auto-Adapt: ON</button>
+        <span id="scriptTag" class="tag orange">—</span>
+        <button class="btn btn-secondary" style="padding:3px 8px;font-size:11px;" onclick="copyText('scriptInput')">Copy</button>
+      </div>
+    </div>
+    <div class="script-selector">
+      <label style="font-size:11px; white-space:nowrap;">Quick select:</label>
+      <select id="scriptSelect2" style="flex:1;" onchange="document.getElementById('scriptSelect').value=this.value; loadScript()"></select>
+    </div>
+    <div id="adaptBanner"></div>
+    <textarea id="scriptInput" spellcheck="false" placeholder="Enter JSONata expression...&#10;&#10;Examples:&#10;  $  (identity)&#10;  $.name  (field access)&#10;  $[age > 25]  (filter)&#10;  $sum($.price)  (aggregate)"></textarea>
+    <div id="stepsPane">
+      <div id="stepsHeader">
+        <span class="steps-label">How this works</span>
+        <button class="steps-toggle" id="stepsToggleBtn" onclick="toggleStepsPane()">▲ hide</button>
+      </div>
+      <div id="stepsBody">
+        <ol id="stepsList"></ol>
+      </div>
+    </div>
+  </div>
+
+  <div class="resizer" id="r2"></div>
+
+  <!-- Pane 3: Output -->
+  <div class="pane" id="pane3" style="flex:1; min-width:0;">
+    <div class="pane-header">
+      <span class="pane-title">Output</span>
+      <div class="pane-controls">
+        <div class="out-mode-toggle">
+          <button id="btnModeJson" class="btn-mode active" onclick="setOutputMode('json')">JSON</button>
+          <button id="btnModeCsv"  class="btn-mode"        onclick="setOutputMode('csv')">CSV</button>
+        </div>
+        <span id="outputStatus" class="tag">—</span>
+        <button class="btn btn-secondary" style="padding:3px 8px;font-size:11px;" onclick="downloadCSV()" title="Download as CSV">&#8595; CSV</button>
+        <button class="btn btn-secondary" style="padding:3px 8px;font-size:11px;" onclick="copyOutput()">Copy</button>
+      </div>
+    </div>
+    <div class="output-box" id="outputBox">Run a transform to see the result here...</div>
+  </div>
+
+</div>
+
+<div class="status-bar">
+  <span id="statusMsg">Ready</span>
+  <span style="margin-left:auto;" id="timeMs"></span>
+</div>
+
+<!-- Add JSON Modal -->
+<div class="modal-backdrop" id="modal-addJson">
+  <div class="modal">
+    <h2>Add JSON Sample</h2>
+    <div class="form-group">
+      <label>Name</label>
+      <input type="text" id="newJsonName" placeholder="e.g., Customer Orders">
+    </div>
+    <div class="form-group">
+      <label>Category</label>
+      <select id="newJsonCategory">
+        <option>Arrays</option><option>Objects</option><option>Nested</option><option>Custom</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>JSON Content</label>
+      <textarea id="newJsonContent" placeholder='[{"id": 1, "name": "Alice"}]'></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('addJson')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveNewJson()">Save Sample</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Script Modal -->
+<div class="modal-backdrop" id="modal-addScript">
+  <div class="modal">
+    <h2>Add JSONata Script</h2>
+    <div class="form-group">
+      <label>Name</label>
+      <input type="text" id="newScriptName" placeholder="e.g., Group by Category">
+    </div>
+    <div class="form-group">
+      <label>Visible with</label>
+      <select id="newScriptScope">
+        <option value="current">Current sample only</option>
+        <option value="all">All samples (Generic)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Category</label>
+      <select id="newScriptCategory">
+        <option>Filter</option><option>Transform</option><option>Aggregate</option><option>Sort</option><option>Custom</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>JSONata Expression</label>
+      <textarea id="newScriptContent" placeholder="$[age > 30]"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('addScript')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveNewScript()">Save Script</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── DATA ────────────────────────────────────────────────────────────────────
+
+const SAMPLES = [
+  /* S1 ─ Simple flat array: every field is a primitive — ideal for filters, sorts, aggregates */
+  {
+    id: 's01', name: 'S1 · Flat Array — Product Catalog', category: 'Flat',
+    json: [
+      {"id":1,"name":"Widget Pro",     "category":"Tools",      "price":29.99,"stock":150,"rating":4.3,"active":true},
+      {"id":2,"name":"Laser Pointer",  "category":"Electronics","price":12.50,"stock":0,  "rating":3.9,"active":true},
+      {"id":3,"name":"Coffee Grinder", "category":"Kitchen",    "price":49.99,"stock":80, "rating":4.7,"active":true},
+      {"id":4,"name":"Yoga Mat",       "category":"Sports",     "price":22.00,"stock":200,"rating":4.1,"active":false},
+      {"id":5,"name":"Wireless Mouse", "category":"Electronics","price":35.00,"stock":45, "rating":4.5,"active":true},
+      {"id":6,"name":"Desk Lamp",      "category":"Home",       "price":18.99,"stock":0,  "rating":4.0,"active":true},
+      {"id":7,"name":"Water Bottle",   "category":"Sports",     "price":14.99,"stock":300,"rating":4.6,"active":true},
+      {"id":8,"name":"Notebook Set",   "category":"Stationery", "price":9.99, "stock":500,"rating":3.8,"active":false}
+    ]
+  },
+
+  /* S2 ─ Integration records: each item has top-level fields PLUS a nested "original" object
+          (a real Snaplogic/MuleSoft pattern where the source row is preserved under "original") */
+  {
+    id: 's02', name: 'S2 · Integration Records — "original" wrapper', category: 'Nested Objects',
+    json: [
+      {
+        "Id": "8013S000000DCPmQAO",
+        "Status": "Pending",
+        "IsNewOrder": true,
+        "Priority": "High",
+        "original": {
+          "JobNumber": "31747",
+          "LineNumber": "001",
+          "PromiseDate": "/Date(1665061384110-0400)/",
+          "Amount": 1250.00,
+          "CustomerRef": "CUST-001"
+        }
+      },
+      {
+        "Id": "8013S000000DCPnQAO",
+        "Status": "Active",
+        "IsNewOrder": false,
+        "Priority": "Low",
+        "original": {
+          "JobNumber": "31747",
+          "LineNumber": "002",
+          "PromiseDate": "/Date(1665061384110-0400)/",
+          "Amount": 800.00,
+          "CustomerRef": "CUST-001"
+        }
+      },
+      {
+        "Id": "8013S000000DCPoQAO",
+        "Status": "Active",
+        "IsNewOrder": null,
+        "Priority": null,
+        "original": {
+          "JobNumber": "31748",
+          "LineNumber": "001",
+          "PromiseDate": null,
+          "Amount": 2100.00,
+          "CustomerRef": "CUST-002"
+        }
+      },
+      {
+        "Id": "8013S000000DCPpQAO",
+        "Status": "Closed",
+        "IsNewOrder": false,
+        "Priority": "Medium",
+        "original": {
+          "JobNumber": "31748",
+          "LineNumber": "002",
+          "PromiseDate": "/Date(1663200000000-0400)/",
+          "Amount": 450.00,
+          "CustomerRef": "CUST-002"
+        }
+      }
+    ]
+  },
+
+  /* S3 ─ Array where each item contains a sub-array (one level of nesting) */
+  {
+    id: 's03', name: 'S3 · Array + Sub-Arrays — Orders & Line Items', category: 'Array + Sub-Arrays',
+    json: [
+      {"orderId":"ORD-001","customer":"Alice","status":"delivered","date":"2024-01-15",
+       "items":[{"sku":"P1","name":"Laptop",   "qty":1,"price":999},{"sku":"P2","name":"Mouse","qty":2,"price":25}],
+       "shipping":{"method":"express", "cost":15}},
+      {"orderId":"ORD-002","customer":"Bob",  "status":"pending",  "date":"2024-01-18",
+       "items":[{"sku":"P3","name":"Keyboard", "qty":1,"price":79}],
+       "shipping":{"method":"standard","cost":5}},
+      {"orderId":"ORD-003","customer":"Carol","status":"shipped",  "date":"2024-01-20",
+       "items":[{"sku":"P4","name":"Monitor",  "qty":2,"price":450},{"sku":"P5","name":"HDMI Cable","qty":3,"price":12}],
+       "shipping":{"method":"express", "cost":20}},
+      {"orderId":"ORD-004","customer":"Dan",  "status":"delivered","date":"2024-01-22",
+       "items":[{"sku":"P6","name":"Webcam",   "qty":1,"price":89}, {"sku":"P7","name":"Stand",     "qty":1,"price":45}],
+       "shipping":{"method":"standard","cost":5}}
+    ]
+  },
+
+  /* S4 ─ Three levels of nested arrays: Company > Departments > Employees */
+  {
+    id: 's04', name: 'S4 · Deep Hierarchy — Company › Dept › Employee', category: 'Deep Hierarchy',
+    json: [
+      {"company":"TechCorp","founded":2015,
+       "departments":[
+         {"name":"Engineering","budget":1500000,
+          "employees":[
+            {"id":"E01","name":"Alice","role":"Lead",      "salary":120000,"skills":["React","Python","AWS"]},
+            {"id":"E02","name":"Bob",  "role":"Dev",       "salary":90000, "skills":["Python","SQL"]},
+            {"id":"E03","name":"Carol","role":"Dev",       "salary":85000, "skills":["Java","Docker"]}
+          ]},
+         {"name":"Marketing","budget":600000,
+          "employees":[
+            {"id":"E04","name":"Dan", "role":"Lead",      "salary":95000, "skills":["SEO","Analytics","Strategy"]},
+            {"id":"E05","name":"Eva", "role":"Specialist","salary":70000, "skills":["Content","Social"]}
+          ]},
+         {"name":"Product","budget":800000,
+          "employees":[
+            {"id":"E06","name":"Frank","role":"Lead",     "salary":110000,"skills":["UX","Roadmap","Agile"]},
+            {"id":"E07","name":"Grace","role":"Designer", "salary":88000, "skills":["Figma","CSS"]}
+          ]}
+       ]},
+      {"company":"DataSoft","founded":2019,
+       "departments":[
+         {"name":"Engineering","budget":900000,
+          "employees":[
+            {"id":"E08","name":"Henry","role":"Lead","salary":115000,"skills":["Go","Kubernetes","ML"]},
+            {"id":"E09","name":"Ivy",  "role":"Dev", "salary":92000, "skills":["Python","TensorFlow"]}
+          ]},
+         {"name":"Sales","budget":500000,
+          "employees":[
+            {"id":"E10","name":"Jack","role":"Lead","salary":100000,"skills":["CRM","Negotiation"]},
+            {"id":"E11","name":"Kate","role":"Rep", "salary":65000, "skills":["Cold Calling","B2B"]}
+          ]}
+       ]}
+    ]
+  },
+
+  /* S5 ─ Deeply-nested API response wrapper: root array, each item has
+          response.entity.<array> plus an "original" query-parameter record.
+          Real Snaplogic/MuleSoft integration pattern. */
+  {
+    id: 's05', name: 'S5 · API Response Wrapper — ExternalReferenceLookup', category: 'Deep API Wrapper',
+    json: [
+      {
+        "response": {
+          "statusLine": {"statusCode": 200, "reasonPhrase": "OK"},
+          "entity": {
+            "ExternalReferenceLookup": [
+              {"Conflicted":false,"ExternalGroup":"SalesForce","ExternalID":"NEW", "ExternalType":"SalesOrder","ID":"132409",        "LineNo":"0","ModifyDate":null,         "ModifyUser":null,        "SourceType":"CustomerOrderHeader","Dirty":true},
+              {"Conflicted":false,"ExternalGroup":"SalesForce","ExternalID":"NEW", "ExternalType":"SalesOrder","ID":"132414",        "LineNo":"0","ModifyDate":null,         "ModifyUser":null,        "SourceType":"CustomerOrderHeader","Dirty":true},
+              {"Conflicted":true, "ExternalGroup":"SalesForce","ExternalID":"",    "ExternalType":"SalesOrder","ID":"DOA3--00003951","LineNo":"0","ModifyDate":"2022-10-06", "ModifyUser":"PSHEEHAN#","SourceType":"CustomerOrderHeader","Dirty":true},
+              {"Conflicted":false,"ExternalGroup":"SalesForce","ExternalID":"",    "ExternalType":"SalesOrder","ID":"DOA3-00003950", "LineNo":"0","ModifyDate":"2022-10-06", "ModifyUser":"PSHEEHAN#","SourceType":"CustomerOrderHeader","Dirty":true},
+              {"Conflicted":false,"ExternalGroup":"SalesForce","ExternalID":"NEW", "ExternalType":"SalesOrder","ID":"SF-132411",     "LineNo":"0","ModifyDate":null,         "ModifyUser":null,        "SourceType":"CustomerOrderHeader","Dirty":true}
+            ]
+          },
+          "headers": {"content-type":"application/json","server":"Microsoft-IIS/10.0","cache-control":"private"}
+        },
+        "original": {"DirtyOnly":"true","ExternalType":"SalesOrder"}
+      }
+    ]
+  },
+
+  /* S6 ─ Financial accruals with two source arrays for reconciliation.
+          Demonstrates group-by aggregation, expected vs actual comparison, discrepancy detection. */
+  {
+    id: 's06', name: 'S6 · Data Reconciliation — Financial Accruals', category: 'Reconciliation',
+    json: {
+      "recon_array": [
+        {"agreement_number":2000069028,"accrual_amount":-246.42,"gl_account":315104,"material_id":"10000050308","customer_id":"1000187492","posting_date":"20210719","unique-join-key":"2000069028_315104_1000187492_10000050308"},
+        {"agreement_number":2000069028,"accrual_amount":-100.00,"gl_account":315104,"material_id":"10000050308","customer_id":"1000187492","posting_date":"20210720","unique-join-key":"2000069028_315104_1000187492_10000050308"},
+        {"agreement_number":2000069029,"accrual_amount": 500.00,"gl_account":315105,"material_id":"10000050309","customer_id":"1000187493","posting_date":"20210719","unique-join-key":"2000069029_315105_1000187493_10000050309"},
+        {"agreement_number":2000069029,"accrual_amount": 250.00,"gl_account":315105,"material_id":"10000050309","customer_id":"1000187493","posting_date":"20210720","unique-join-key":"2000069029_315105_1000187493_10000050309"},
+        {"agreement_number":2000069030,"accrual_amount":  75.50,"gl_account":315106,"material_id":"10000050310","customer_id":"1000187494","posting_date":"20210719","unique-join-key":"2000069030_315106_1000187494_10000050310"},
+        {"agreement_number":2000069030,"accrual_amount":  24.50,"gl_account":315106,"material_id":"10000050310","customer_id":"1000187494","posting_date":"20210720","unique-join-key":"2000069030_315106_1000187494_10000050310"}
+      ],
+      "source_a": [
+        {"agreement_number":2000069028,"expected_amount":-346.42,"gl_account":315104,"customer_id":"1000187492"},
+        {"agreement_number":2000069029,"expected_amount": 760.00,"gl_account":315105,"customer_id":"1000187493"},
+        {"agreement_number":2000069030,"expected_amount": 100.00,"gl_account":315106,"customer_id":"1000187494"}
+      ],
+      "source_b": [
+        {"agreement_number":2000069028,"posted_amount":-346.42,"status":"posted"},
+        {"agreement_number":2000069029,"posted_amount": 745.00,"status":"pending"},
+        {"agreement_number":2000069030,"posted_amount": 100.00,"status":"posted"}
+      ]
+    }
+  }
+];
+
+const SCRIPTS = [
+  // ── Generic ────────────────────────────────────────────────────────────────
+  {id:'g01', name:'Identity — return everything', category:'Generic', expr:'$',
+   steps:[
+     '`$` refers to the entire input document — the root.',
+     'Returning `$` with no transformation passes data through unchanged.',
+     'Useful as a baseline to confirm the input shape before writing more specific expressions.'
+   ]},
+  {id:'g02', name:'Count items', category:'Generic', expr:'$count($)',
+   steps:[
+     '`$` is the root input (usually an array).',
+     '`$count($)` is a built-in aggregation function that returns the number of items.',
+     'Returns a single number, not an array.'
+   ]},
+  {id:'g03', name:'First item', category:'Generic', expr:'$[0]',
+   steps:[
+     '`$[0]` uses bracket notation to access the element at index 0 (zero-based).',
+     'Returns the first object in the array.',
+     'Change the index to `$[1]`, `$[2]`, etc. to access other positions.'
+   ]},
+  {id:'g04', name:'Distinct values of a field', category:'Generic', expr:'$distinct($.category)',
+   steps:[
+     '`$.category` traverses every item in the root array and collects all `category` field values.',
+     '`$distinct(...)` removes duplicate values, returning only unique ones.',
+     'Result is a flat array of unique strings — a quick way to see what values exist for any field.'
+   ]},
+  {id:'g05', name:'Regex — names starting with A', category:'Generic', expr:'$[name ~> /^A/i]',
+   steps:[
+     '`$[...]` is JSONata\'s filter predicate — it keeps only items where the expression inside is truthy.',
+     '`~>` is the JSONata regex-match operator; it evaluates to `true` if the left side matches the right-side pattern.',
+     '`/^A/i` is a regex literal matching strings that start with "A" or "a" — the `i` flag makes it case-insensitive.',
+     'Only items where `name` matches the pattern are kept in the output.'
+   ]},
+  {id:'g06', name:'$type — inspect value type of each field', category:'Generic',
+   expr:'$.{"name":name,"priceType":$type(price),"activeType":$type(active),"idType":$type(id)}',
+   steps:[
+     '`$type(value)` returns a string describing the JSON type: `"number"`, `"string"`, `"boolean"`, `"array"`, `"object"`, or `"null"`.',
+     'Useful for validating that fields contain the expected data type before downstream processing.',
+     'Applying it inside `$.{...}` maps a type-check row alongside each original record.',
+     'Returns `undefined` (field omitted) when the input value itself is undefined — distinguishing "absent" from "null".'
+   ]},
+  {id:'g07', name:'$keys — list all field names of the first item', category:'Generic',
+   expr:'$keys($[0])',
+   steps:[
+     '`$[0]` extracts the first element from the root array.',
+     '`$keys(object)` returns an array of all property names of that object.',
+     'When applied to an array of objects, `$keys` returns the deduplicated union of all keys across all items.',
+     'Useful for schema discovery — finding what fields exist in a payload without knowing the shape in advance.'
+   ]},
+  {id:'g08', name:'~> chain operator — pipe string transformations', category:'Generic',
+   expr:'"alice@techcorp.com" ~> $substringAfter("@") ~> $uppercase()',
+   steps:[
+     '`~>` is the JSONata chain (pipe) operator — it passes the result of the left side as the first argument of the right side.',
+     '`$substringAfter(str, "@")` returns everything after the `@` in an email address: `"techcorp.com"`.',
+     'That result is immediately piped into `$uppercase()`, producing `"TECHCORP.COM"`.',
+     'Chaining avoids deeply nested function calls — `f(g(h(x)))` becomes `x ~> h() ~> g() ~> f()`.',
+     'Replace the literal email with a field path like `$.email ~> $substringAfter("@") ~> $uppercase()` to apply to real data.'
+   ]},
+  {id:'g09', name:'?: Elvis — default value when field is null / missing', category:'Generic',
+   expr:'$.{"name":name, "priority": Priority ?: "Normal", "score": score ?: 0}',
+   steps:[
+     '`?:` is the Elvis (default) operator — it returns the left side if it is a non-null, truthy value, otherwise the right side.',
+     'Different from a normal ternary because it avoids repeating the test expression.',
+     '`Priority ?: "Normal"` returns the `Priority` value when it exists and is non-null, or `"Normal"` as a fallback.',
+     '`score ?: 0` similarly substitutes `0` for missing or null numeric fields.',
+     'Commonly used in integration pipelines to provide safe defaults before sending data downstream.'
+   ]},
+  {id:'g10', name:'$split + $join — tokenise a delimited string', category:'Generic',
+   expr:'(\n  $raw := "2000069028_315104_1000187492_10000050308";\n  $parts := $split($raw, "_");\n  {\n    "raw":         $raw,\n    "parts":       $parts,\n    "agreement":   $parts[0],\n    "glAccount":   $parts[1],\n    "rejoined":    $join($parts, " | ")\n  }\n)',
+   steps:[
+     '`$split(string, separator)` splits a string into an array using the separator as the delimiter.',
+     '`$parts[0]`, `$parts[1]` access individual tokens by zero-based index.',
+     '`$join(array, separator)` is the inverse — it concatenates an array of strings with the given separator.',
+     'This pattern is useful for parsing composite keys like `agreement_glAccount_customer_material` or CSV values.',
+     'Both functions also accept regex patterns as separators for more flexible tokenisation.'
+   ]},
+
+  // ── S1 · Flat Array ────────────────────────────────────────────────────────
+  {id:'s1a', name:'Filter — in-stock & active', category:'S1 · Flat Array', forSample:'s01',
+   expr:'$[active = true and stock > 0]',
+   steps:[
+     '`$[...]` filters the root array — only items where the predicate is true are kept.',
+     '`active = true` checks the boolean field directly.',
+     '`stock > 0` ensures the quantity on hand is positive.',
+     '`and` requires both conditions to be true simultaneously for an item to appear in the result.'
+   ]},
+  {id:'s1b', name:'Sort by price descending', category:'S1 · Flat Array', forSample:'s01',
+   expr:'$sort($, function($a,$b){$a.price < $b.price}).{"name":name,"category":category,"price":price}',
+   steps:[
+     '`$sort($, comparator)` sorts the root array using a two-argument comparator function.',
+     'In JSONata the comparator returns `true` if `$a` should come before `$b`. `$a.price < $b.price` means "put the cheaper item first in comparison" — so higher prices sort to the front (descending order).',
+     '`.{"name":..., "price":...}` is a transform that maps each sorted item to a smaller object containing only the three listed fields.',
+     'The dot `.` between the sort result and `{...}` means "for each item in the array, apply this shape".'
+   ]},
+  {id:'s1c', name:'Summary stats (count, avgPrice, avgRating, categories)', category:'S1 · Flat Array', forSample:'s01',
+   expr:'{\n  "count":      $count($),\n  "avgPrice":   $round($average($.price), 2),\n  "avgRating":  $round($average($.rating), 2),\n  "categories": $distinct($.category)\n}',
+   steps:[
+     'The outer `{ ... }` at the root level builds a single output object (not an array).',
+     '`$count($)` counts all items; `$average($.price)` computes the mean of all `price` values.',
+     '`$round(..., 2)` rounds to 2 decimal places to clean up floating-point results.',
+     '`$distinct($.category)` collects unique category names across all items.',
+     'All four aggregations run over the same input array and are combined into one summary object.'
+   ]},
+  {id:'s1d', name:'Top-rated — formatted label per item', category:'S1 · Flat Array', forSample:'s01',
+   expr:'$[rating >= 4.3].{"label": name & " (" & category & ")", "price": "$" & $string(price), "rating": rating}',
+   steps:[
+     '`$[rating >= 4.3]` first filters the array, keeping only highly rated items.',
+     '`.{...}` then maps each filtered item to a new object shape.',
+     '`name & " (" & category & ")"` uses the `&` operator to concatenate strings into a display label.',
+     '`"$" & $string(price)` converts the numeric price to a string with `$string()`, then prepends a dollar sign.'
+   ]},
+
+  // ── S2 · Integration Records (original wrapper) ────────────────────────────
+  {id:'s2a', name:'Promote original.* fields to root level', category:'S2 · Integration Records', forSample:'s02',
+   expr:'$.($merge([$, original]))',
+   steps:[
+     '`$.(...)` maps a block expression over each item in the root array.',
+     '`$` inside the block refers to the current array item (one integration record).',
+     '`$merge([A, B])` merges two objects together — keys from later objects overwrite earlier ones.',
+     '`[$, original]` merges the whole record with its nested `original` sub-object.',
+     'After the merge, all `original.*` fields (`JobNumber`, `LineNumber`, `Amount`, etc.) appear at root level alongside `Id`, `Status`, `Priority`.',
+     'The `original` key itself is still present in the output — to remove it you would need an explicit field projection.'
+   ]},
+  {id:'s2b', name:'Remove null / empty fields from each record', category:'S2 · Integration Records', forSample:'s02',
+   expr:'$.(\n  $merge($each($, function($v, $k){\n    $v != null and $v != "" ? {$k: $v} : {}\n  }))\n)',
+   steps:[
+     '`$.(...)` maps a block over each record in the root array.',
+     '`$each($, function($v, $k){...})` iterates every key-value pair of the current record, calling the function with the value (`$v`) and key name (`$k`).',
+     'If `$v` is not null and not an empty string, the pair is kept as `{$k: $v}` — a single-key object.',
+     'Otherwise an empty object `{}` is returned for that pair.',
+     '`$merge(...)` fuses all those per-field objects back into one complete object — empty objects contribute nothing.',
+     'Result: records with only fields that have actual values (e.g., `IsNewOrder: null` and `Priority: null` are dropped).'
+   ]},
+  {id:'s2c', name:'Add computed flags (isNew + hasPromiseDate)', category:'S2 · Integration Records', forSample:'s02',
+   expr:'$.($merge([$, {\n  "isNew":          IsNewOrder = true,\n  "hasPromiseDate": original.PromiseDate != null,\n  "jobRef":         original.JobNumber & "-" & original.LineNumber\n}]))',
+   steps:[
+     '`$.(...)` maps over each record.',
+     '`$merge([$, {...}])` merges the original record with a new object containing computed fields.',
+     '`IsNewOrder = true` is a boolean expression — it evaluates to `true` or `false` and that value becomes the field value.',
+     '`original.PromiseDate != null` navigates into the nested object to check if the date field has a value.',
+     '`original.JobNumber & "-" & original.LineNumber` concatenates two nested fields into a human-readable reference code.',
+     'The computed fields are added alongside all existing fields from the original record.'
+   ]},
+  {id:'s2d', name:'Rename all fields — add "apex_" prefix', category:'S2 · Integration Records', forSample:'s02',
+   expr:'$.(\n  $merge($each($, function($v, $k){\n    {("apex_" & $k): $v}\n  }))\n)',
+   steps:[
+     '`$.(...)` maps over each record in the root array.',
+     '`$each($, function($v, $k){...})` iterates every key-value pair of the current record.',
+     '`{("apex_" & $k): $v}` creates a single-key object where the key has "apex_" prepended — e.g., `Id` becomes `apex_Id`.',
+     'The parentheses around `"apex_" & $k` are required because the key is a computed expression.',
+     '`$merge(...)` fuses all those single-key objects back into one complete object.',
+     'Result: every field is renamed — `Id` → `apex_Id`, `Status` → `apex_Status`, `original` → `apex_original`, etc.'
+   ]},
+
+  // ── S3 · Array + Sub-Arrays ────────────────────────────────────────────────
+  {id:'s3a', name:'Order summary — itemCount + total value', category:'S3 · Array + Sub-Arrays', forSample:'s03',
+   expr:'$.{\n  "orderId":   orderId,\n  "customer":  customer,\n  "status":    status,\n  "itemCount": $count(items),\n  "total":     $round($sum(items.(qty * price)) + shipping.cost, 2)\n}',
+   steps:[
+     '`$.{...}` maps each order to a new object shape.',
+     '`$count(items)` counts the line items in each order\'s sub-array.',
+     '`items.(qty * price)` steps into the items sub-array and evaluates `qty * price` for every item, producing an array of subtotals.',
+     '`$sum(...)` adds all those subtotals; `+ shipping.cost` adds the per-order shipping fee.',
+     '`$round(..., 2)` rounds the final total to 2 decimal places.'
+   ]},
+  {id:'s3b', name:'Explode — one flat row per line item', category:'S3 · Array + Sub-Arrays', forSample:'s03',
+   expr:'$.(\n  $order := $;\n  items.{\n    "orderId":  $order.orderId,\n    "customer": $order.customer,\n    "status":   $order.status,\n    "product":  name,\n    "qty":      qty,\n    "subtotal": qty * price\n  }\n)',
+   steps:[
+     '`$.(...)` maps a block expression over each order in the root array.',
+     '`$order := $` captures the current order in a variable — this is necessary because `$` will change to refer to each line item once we step into the sub-array.',
+     '`items.{...}` steps into the `items` sub-array and maps each line item to a flat output object.',
+     'Parent-level fields (`orderId`, `customer`, `status`) are pulled from `$order`; item fields (`name`, `qty`, `price`) come from the current `$` (each line item).',
+     '`qty * price` computes the line subtotal inline.',
+     'An order with N items produces N output rows — this "explode" pattern denormalizes the nested structure into a flat table.'
+   ]},
+  {id:'s3c', name:'Items from delivered orders only', category:'S3 · Array + Sub-Arrays', forSample:'s03',
+   expr:'$[status = "delivered"].(\n  $order := $;\n  items.{"orderId": $order.orderId, "product": name, "qty": qty, "subtotal": qty * price}\n)',
+   steps:[
+     '`$[status = "delivered"]` first filters the root array to only delivered orders.',
+     '`.(...)` then maps a block over those filtered orders only.',
+     '`$order := $` captures each delivered order so its fields stay accessible when stepping into items.',
+     '`items.{...}` maps each line item to a flat row combining order-level and item-level fields.',
+     'The combination of filter then explode is a common pattern for conditional denormalization.'
+   ]},
+  {id:'s3d', name:'Total revenue across all line items', category:'S3 · Array + Sub-Arrays', forSample:'s03',
+   expr:'$sum($.items.(qty * price))',
+   steps:[
+     '`$.items` navigates from the root array into every order\'s `items` sub-array, collecting all line items from all orders into one flat array.',
+     '`.(qty * price)` evaluates `qty * price` for every item in that combined array.',
+     '`$sum(...)` adds all those individual line totals into a single grand total.',
+     'Returns one number representing total revenue across all orders and all line items.'
+   ]},
+
+  // ── S4 · Deep Hierarchy ────────────────────────────────────────────────────
+  {id:'s4a', name:'Company summary — deptCount, headcount, totals', category:'S4 · Deep Hierarchy', forSample:'s04',
+   expr:'$.{\n  "company":     company,\n  "deptCount":   $count(departments),\n  "headcount":   $count(departments.employees),\n  "totalBudget": $sum(departments.budget),\n  "totalSalary": $sum(departments.employees.salary)\n}',
+   steps:[
+     '`$.{...}` maps each company to a summary object.',
+     '`$count(departments)` counts the number of departments in that company.',
+     '`departments.employees` traverses two levels to collect all employee objects from all departments into one flat array.',
+     '`$count(departments.employees)` gives total headcount across all departments in one step.',
+     '`$sum(departments.budget)` sums all department budgets; `$sum(departments.employees.salary)` sums all salaries across the whole company.'
+   ]},
+  {id:'s4b', name:'Dept summary — headcount & avgSalary per dept', category:'S4 · Deep Hierarchy', forSample:'s04',
+   expr:'$.(\n  $co := $;\n  departments.{\n    "company":   $co.company,\n    "dept":      name,\n    "headcount": $count(employees),\n    "avgSalary": $round($average(employees.salary), 0),\n    "budget":    budget\n  }\n)',
+   steps:[
+     '`$.($co := $; ...)` maps over companies, capturing each company in `$co` before stepping deeper.',
+     '`departments.{...}` then maps over that company\'s departments, producing one output row per department.',
+     '`$co.company` references the captured parent company name; `name` and `budget` come from the current department (`$`).',
+     '`$count(employees)` counts staff in this department; `$average(employees.salary)` averages their salaries.',
+     '`$round(..., 0)` rounds the average salary to a whole number.'
+   ]},
+  {id:'s4c', name:'Full flatten — company › dept › employee rows', category:'S4 · Deep Hierarchy', forSample:'s04',
+   expr:'$.(\n  $co := $;\n  departments.(\n    $dept := $;\n    employees.{\n      "company": $co.company,\n      "dept":    $dept.name,\n      "name":    name,\n      "role":    role,\n      "salary":  salary,\n      "skills":  skills\n    }\n  )\n)',
+   steps:[
+     '`$.($co := $; ...)` — outer loop over companies; `$co` captures the company object.',
+     '`departments.($dept := $; ...)` — middle loop over departments; `$dept` captures the department object.',
+     '`employees.{...}` — inner loop over employees produces one flat output row per employee.',
+     'Each row pulls `company` from `$co`, `dept` name from `$dept`, and all employee fields from the current `$`.',
+     'Variable capture (`$co :=`, `$dept :=`) is the key technique for traversing multi-level nesting — without it, parent context is lost when stepping into a child array.',
+     'Result: a fully flattened array — one row per employee carrying all three levels of context.'
+   ]},
+  {id:'s4d', name:'All Leads across every company & dept', category:'S4 · Deep Hierarchy', forSample:'s04',
+   expr:'$.(\n  $co := $;\n  departments.(\n    $dept := $;\n    employees[role = "Lead"].{\n      "company": $co.company,\n      "dept":    $dept.name,\n      "name":    name,\n      "salary":  salary\n    }\n  )\n)',
+   steps:[
+     'Same three-level variable capture pattern as the full flatten.',
+     '`employees[role = "Lead"]` adds a filter predicate at the innermost level — only employees with the Lead role are processed.',
+     'The filter happens before the shape transform, so only matching employees produce output rows.',
+     'Result: one row per Lead across all companies and departments, with their department and company context included.'
+   ]},
+
+  // ── S5 · API Response Wrapper ──────────────────────────────────────────────
+  {id:'s5a', name:'Extract deep nested array from response.entity', category:'S5 · API Response', forSample:'s05',
+   expr:'$.response.entity.ExternalReferenceLookup',
+   steps:[
+     '`$` is the root array (one item: the API response wrapper).',
+     '`$.response` steps from each root item into its `response` field.',
+     '`.entity` navigates into the nested `entity` object inside `response`.',
+     '`.ExternalReferenceLookup` accesses the target array buried three levels deep.',
+     'JSONata automatically flattens through wrapper arrays — since there is one root item, the output is the lookup array directly.'
+   ]},
+  {id:'s5b', name:'Add CustomerOrderID field (copy from ID)', category:'S5 · API Response', forSample:'s05',
+   expr:'$.response.entity.ExternalReferenceLookup.($merge([$, {"CustomerOrderID": ID}]))',
+   steps:[
+     'Navigates to `ExternalReferenceLookup` using the same three-level path as the extract script.',
+     '`.(...)` maps a block over each lookup record in the array.',
+     '`$merge([$, {"CustomerOrderID": ID}])` merges the current record with a new object.',
+     'The new object adds one field: `CustomerOrderID` copied from the existing `ID` field.',
+     'Result: same records with an extra `CustomerOrderID` field added to each — a common integration pattern when systems use different key names.'
+   ]},
+  {id:'s5c', name:'Filter — ExternalID = "NEW" records only', category:'S5 · API Response', forSample:'s05',
+   expr:'$.response.entity.ExternalReferenceLookup[ExternalID = "NEW"].{\n  "CustomerOrderID": ID,\n  "ExternalGroup":   ExternalGroup,\n  "SourceType":      SourceType,\n  "Dirty":           Dirty\n}',
+   steps:[
+     'Navigates to the `ExternalReferenceLookup` array three levels deep.',
+     '`[ExternalID = "NEW"]` applies a filter predicate — only records where `ExternalID` is exactly "NEW" pass through.',
+     '`.{...}` then shapes each passing record to only the fields needed by the downstream system.',
+     '`"CustomerOrderID": ID` renames the `ID` field to the target system\'s expected key name.',
+     'Combined: navigate → filter → reshape in one expression — a typical data extraction pipeline.'
+   ]},
+  {id:'s5d', name:'Conflict report — count NEW vs conflicted records', category:'S5 · API Response', forSample:'s05',
+   expr:'{\n  "totalLookups":  $count($.response.entity.ExternalReferenceLookup),\n  "newCount":      $count($.response.entity.ExternalReferenceLookup[ExternalID = "NEW"]),\n  "conflictCount": $count($.response.entity.ExternalReferenceLookup[Conflicted = true]),\n  "conflictedIds": $.response.entity.ExternalReferenceLookup[Conflicted = true].ID,\n  "hasConflicts":  $boolean($.response.entity.ExternalReferenceLookup[Conflicted = true])\n}',
+   steps:[
+     'The outer `{...}` builds a single summary object.',
+     'The same deep path `$.response.entity.ExternalReferenceLookup` is navigated multiple times — each time with a different filter or transformation.',
+     '`$count(...)` with no filter gives total records; with `[ExternalID = "NEW"]` gives only new ones; with `[Conflicted = true]` gives conflicted ones.',
+     '`.ID` on the filtered conflicted set collects their IDs into an array.',
+     '`$boolean(...)` converts a non-empty array to `true` and an empty array to `false` — producing the `hasConflicts` boolean flag.'
+   ]},
+
+  // ── S6 · Data Reconciliation ───────────────────────────────────────────────
+  {id:'s6a', name:'Aggregate accruals by unique-join-key', category:'S6 · Reconciliation', forSample:'s06',
+   expr:'(\n  $data := recon_array;\n  $keys := $distinct($data."unique-join-key");\n  $keys.(\n    $key := $;\n    $grp := $data[$."unique-join-key" = $key];\n    {\n      "joinKey":      $key,\n      "agreement":    $grp[0].agreement_number,\n      "gl_account":   $grp[0].gl_account,\n      "customer_id":  $grp[0].customer_id,\n      "totalAccrual": $round($sum($grp.accrual_amount), 2),\n      "recordCount":  $count($grp)\n    }\n  )\n)',
+   steps:[
+     '`$data := recon_array` binds the accrual records array to a variable for repeated use without re-navigating.',
+     '`$distinct($data."unique-join-key")` collects all distinct join key values — note the quoted field name because it contains a hyphen.',
+     '`$keys.(...)` maps over each distinct key, producing one output row per group.',
+     '`$key := $` captures the current key; `$data[$."unique-join-key" = $key]` filters the full dataset to only records matching that key.',
+     '`$sum($grp.accrual_amount)` sums all accrual amounts in the group; `$round(..., 2)` removes floating-point noise.',
+     '`$count($grp)` shows how many individual records were aggregated into this total.'
+   ]},
+  {id:'s6b', name:'Reconcile accruals vs source_a expected amounts', category:'S6 · Reconciliation', forSample:'s06',
+   expr:'(\n  $data := recon_array;\n  source_a.(\n    $src := $;\n    $actual := $round($sum($data[agreement_number = $src.agreement_number].accrual_amount), 2);\n    {\n      "agreement": $src.agreement_number,\n      "expected":  $src.expected_amount,\n      "actual":    $actual,\n      "difference":$round($actual - $src.expected_amount, 2),\n      "status":    $actual = $src.expected_amount ? "MATCHED" : "DISCREPANCY"\n    }\n  )\n)',
+   steps:[
+     '`$data := recon_array` binds all accrual records for efficient repeated lookup.',
+     '`source_a.(...)` maps over each expected-amount entry in `source_a` — one row per agreement.',
+     '`$src := $` captures the current `source_a` row so its fields remain accessible inside the nested expression.',
+     '`$data[agreement_number = $src.agreement_number]` filters all accrual records to only those belonging to this agreement.',
+     '`$sum(...accrual_amount)` totals the actual posted accruals; `$round(..., 2)` avoids floating-point errors in financial comparisons.',
+     '`$actual = $src.expected_amount ? "MATCHED" : "DISCREPANCY"` produces a status label — the conditional `?:` operator in JSONata.'
+   ]},
+  {id:'s6c', name:'Source A vs Source B — cross-source comparison', category:'S6 · Reconciliation', forSample:'s06',
+   expr:'(\n  source_a.(\n    $a := $;\n    $b := $$.source_b[agreement_number = $a.agreement_number];\n    {\n      "agreement":  $a.agreement_number,\n      "expected":   $a.expected_amount,\n      "posted":     $b.posted_amount,\n      "b_status":   $b.status,\n      "difference": $round($b.posted_amount - $a.expected_amount, 2),\n      "match":      $b.posted_amount = $a.expected_amount ? "MATCHED" : "DISCREPANCY"\n    }\n  )\n)',
+   steps:[
+     '`source_a.(...)` maps over each expected-amount record from source_a.',
+     '`$a := $` captures the current source_a row.',
+     '`$$` is the root document — needed here because `$` has been rebound to each source_a item; `$$` always refers to the top-level input.',
+     '`$$.source_b[agreement_number = $a.agreement_number]` reaches back to the root, navigates to `source_b`, and filters for the matching agreement.',
+     '`$b.posted_amount - $a.expected_amount` computes the discrepancy; `$round(..., 2)` cleans up floating-point noise.',
+     'Result: one row per agreement showing expected (source_a) vs posted (source_b) with a MATCHED/DISCREPANCY flag.'
+   ]},
+  {id:'s6d', name:'Full reconciliation report — summary + by agreement', category:'S6 · Reconciliation', forSample:'s06',
+   expr:'(\n  $data := recon_array;\n  {\n    "totalRecords":       $count($data),\n    "distinctAgreements": $count($distinct($data.agreement_number)),\n    "grandTotal":         $round($sum($data.accrual_amount), 2),\n    "byAgreement": $distinct($data.agreement_number).(\n      $agr := $;\n      $grp := $data[agreement_number = $agr];\n      {\n        "agreement":    $agr,\n        "lineCount":    $count($grp),\n        "totalAccrual": $round($sum($grp.accrual_amount), 2)\n      }\n    )\n  }\n)',
+   steps:[
+     '`$data := recon_array` binds all accrual records once for repeated use.',
+     'The outer `{...}` builds a single report object with a summary section and a per-agreement breakdown.',
+     '`$count($data)` gives the total number of accrual lines; `$count($distinct($data.agreement_number))` counts unique agreements.',
+     '`$sum($data.accrual_amount)` totals all accruals — the grand total across all agreements.',
+     '`$distinct($data.agreement_number).(...)` maps over each unique agreement number to produce the breakdown array.',
+     '`$agr := $` captures the current agreement; `$data[agreement_number = $agr]` groups matching records — then `$count` and `$sum` aggregate them.'
+   ]},
+
+  // ── S1 · No-function alternatives + unique extras ─────────────────────────
+  {id:'s1e', name:'Price tier + availability label — ternary, no function', category:'S1 · Flat Array', forSample:'s01',
+   expr:'$.{\n  "name":      name,\n  "price":     price,\n  "tier":      price < 15 ? "budget" : price < 35 ? "mid" : "premium",\n  "available": active and stock > 0 ? "yes" : "no"\n}',
+   steps:[
+     '`$.{...}` maps a new shape over every item — no `function` keyword needed.',
+     'Nested ternary `price < 15 ? "budget" : price < 35 ? "mid" : "premium"` classifies each item into a price tier inline.',
+     '`active and stock > 0` combines two boolean conditions; the outer ternary converts the result to a "yes"/"no" string.',
+     'Result: a classification record per product using only expressions — zero inline functions required.'
+   ]},
+  {id:'s1f', name:'Inventory value per item — stock × price, no function',  category:'S1 · Flat Array', forSample:'s01',
+   expr:'$.{\n  "name":           name,\n  "category":       category,\n  "stock":          stock,\n  "price":          price,\n  "inventoryValue": $round(stock * price, 2)\n}',
+   steps:[
+     '`stock * price` is a plain arithmetic expression — no helper function needed.',
+     '`$round(value, 2)` rounds the computed value to 2 decimal places.',
+     'Both fields are referenced by bare name; JSONata resolves them against the current array item.',
+     'Result: each product enriched with its total inventory value (stock on hand × unit price).'
+   ]},
+  {id:'s1g', name:'Category stats — count + avgPrice per category',          category:'S1 · Flat Array', forSample:'s01',
+   expr:'{\n  "Electronics": {"count": $count($[category="Electronics"]), "avgPrice": $round($average($[category="Electronics"].price), 2)},\n  "Sports":      {"count": $count($[category="Sports"]),      "avgPrice": $round($average($[category="Sports"].price),      2)},\n  "Kitchen":     {"count": $count($[category="Kitchen"]),     "avgPrice": $round($average($[category="Kitchen"].price),     2)},\n  "Tools":       {"count": $count($[category="Tools"]),       "avgPrice": $round($average($[category="Tools"].price),      2)},\n  "Home":        {"count": $count($[category="Home"]),        "avgPrice": $round($average($[category="Home"].price),       2)},\n  "Stationery":  {"count": $count($[category="Stationery"]), "avgPrice": $round($average($[category="Stationery"].price), 2)}\n}',
+   steps:[
+     'A single object literal with one key per category — each value is itself an object with aggregates.',
+     '`$[category="Electronics"]` filters the root array to just Electronics items — no `$distinct` or variable binding.',
+     '`.price` extracts the `price` field from every matching item; `$average(...)` computes the mean.',
+     '`$count(...)` and `$average(...)` are built-in aggregation functions — no `function` keyword needed.',
+     'Trade-off vs dynamic grouping: requires listing category names, but the expression is entirely function-free and easy to read.'
+   ]},
+
+  // ── S2 · Simpler alternatives (no inline function keyword) ─────────────────
+  {id:'s2e', name:'Flatten to root — explicit fields, no $each / function',  category:'S2 · Integration Records', forSample:'s02',
+   expr:'$.{\n  "Id":          Id,\n  "Status":      Status,\n  "Priority":    Priority,\n  "JobNumber":   original.JobNumber,\n  "LineNumber":  original.LineNumber,\n  "Amount":      original.Amount,\n  "CustomerRef": original.CustomerRef\n}',
+   steps:[
+     'Instead of `$merge([$, original])` which keeps the `original` key, this uses an explicit object constructor.',
+     'Each output field is named directly — `original.JobNumber` drills one level via dot notation.',
+     'The `original` wrapper disappears naturally because it is not listed as an output key.',
+     'Trade-off: requires knowing the schema; reward: no `function($v,$k)`, no `$merge`, crystal-clear output shape.'
+   ]},
+  {id:'s2f', name:'Rename with "apex_" prefix — explicit, no $each / function', category:'S2 · Integration Records', forSample:'s02',
+   expr:'$.{\n  "apex_Id":         Id,\n  "apex_Status":     Status,\n  "apex_Priority":   Priority,\n  "apex_IsNewOrder": IsNewOrder,\n  "apex_JobNumber":  original.JobNumber,\n  "apex_Amount":     original.Amount\n}',
+   steps:[
+     'Same goal as the `$each(function)` prefix-rename script — achieved with a plain object constructor.',
+     'Each output key is a string literal (`"apex_fieldname"`) — no dynamic key construction or `function` keyword.',
+     'Fields inside `original` can be promoted at the same time by using dot notation as the value.',
+     'This is the preferred approach when the schema is known: simpler, more explicit, faster to evaluate.'
+   ]},
+  {id:'s2g', name:'Group record IDs by Status — one filter per bucket',       category:'S2 · Integration Records', forSample:'s02',
+   expr:'{\n  "Pending": $[Status = "Pending"].Id,\n  "Active":  $[Status = "Active"].Id,\n  "Closed":  $[Status = "Closed"].Id\n}',
+   steps:[
+     'A single object literal with three keys, each holding one status bucket.',
+     '`$[Status = "Pending"]` filters the input array to only Pending records; `.Id` extracts the Id from each.',
+     'When multiple records match, JSONata automatically returns an array of Ids — no explicit collect step.',
+     'No variable binding or inline function — three array filters produce a grouped map in one clean expression.'
+   ]},
+
+  // ── S3 · No-function extras ────────────────────────────────────────────────
+  {id:'s3e', name:'Per-order price range — $max / $min on sub-array',        category:'S3 · Array + Sub-Arrays', forSample:'s03',
+   expr:'$.{\n  "orderId":      orderId,\n  "customer":     customer,\n  "itemCount":    $count(items),\n  "maxItemPrice": $max(items.price),\n  "minItemPrice": $min(items.price),\n  "priceRange":   $max(items.price) - $min(items.price)\n}',
+   steps:[
+     '`$max(items.price)` and `$min(items.price)` aggregate over the nested `items` sub-array — no inline function needed.',
+     '`items.price` extracts the `price` field from every element of the sub-array in one path step.',
+     '`$count(items)` gives the line-item count per order.',
+     'Arithmetic between two aggregates (`$max - $min`) computes the price spread inline.',
+     'All operations use built-in functions on a sub-array path — no variable capture or `function` keyword.'
+   ]},
+  {id:'s3f', name:'Revenue split by shipping method — no function',           category:'S3 · Array + Sub-Arrays', forSample:'s03',
+   expr:'{\n  "express":  $round($sum($[shipping.method = "express" ].items.(qty * price)), 2),\n  "standard": $round($sum($[shipping.method = "standard"].items.(qty * price)), 2),\n  "total":    $round($sum($.items.(qty * price)), 2)\n}',
+   steps:[
+     '`$[shipping.method = "express"]` filters the top-level order array by a field nested inside `shipping` — no function needed.',
+     '`.items.(qty * price)` navigates into each matching order\'s items sub-array and computes line subtotals inline.',
+     '`$sum(...)` aggregates all subtotals across those orders into one number per shipping bucket.',
+     '`"total"` repeats the same pattern without a filter to cover every order.',
+     'A complete cross-group revenue split in one expression — no variables, no lambdas.'
+   ]},
+
+  // ── S4 · No-function extras ────────────────────────────────────────────────
+  {id:'s4e', name:'All unique skills across every employee — flat path',      category:'S4 · Deep Hierarchy', forSample:'s04',
+   expr:'$sort($distinct($.departments.employees.skills))',
+   steps:[
+     '`$.departments` traverses from every company into its departments array, flattening across companies automatically.',
+     '`.employees` continues into each department\'s employees array — again flattened.',
+     '`.skills` extracts the skills array from every employee; JSONata flattens nested arrays during path traversal.',
+     '`$distinct(...)` removes duplicates from the fully-flattened skill list.',
+     '`$sort(...)` sorts alphabetically (case-sensitive: uppercase letters come before lowercase).',
+     'Three operators chained — navigate → deduplicate → sort — with zero inline functions.'
+   ]},
+  {id:'s4f', name:'Headcount by role — deep path + filter, no function',     category:'S4 · Deep Hierarchy', forSample:'s04',
+   expr:'{\n  "Lead":       $count($.departments.employees[role = "Lead"]),\n  "Dev":        $count($.departments.employees[role = "Dev"]),\n  "Specialist": $count($.departments.employees[role = "Specialist"]),\n  "Designer":   $count($.departments.employees[role = "Designer"]),\n  "Rep":        $count($.departments.employees[role = "Rep"])\n}',
+   steps:[
+     '`$.departments.employees` traverses all three levels at once — companies → departments → employees — producing a flat list.',
+     'A filter predicate `[role = "..."]` is applied at the employee level to select only that role.',
+     '`$count(...)` counts the filtered list; the pattern repeats per role inside one object constructor.',
+     'No variable binding or inline function — deep-path traversal + filter + count is all that\'s needed.'
+   ]},
+
+  // ── S5 · No-function extras ────────────────────────────────────────────────
+  {id:'s5e', name:'All record IDs — single path expression',                  category:'S5 · API Response', forSample:'s05',
+   expr:'$.response.entity.ExternalReferenceLookup.ID',
+   steps:[
+     'The path `$.response.entity.ExternalReferenceLookup` navigates three levels into the nested response.',
+     '`.ID` appended at the end extracts just the `ID` field from every element of that array.',
+     'JSONata automatically returns an array of scalars when a field is extracted from an array path.',
+     'This is the simplest possible deep-extract: one path expression, no operators, no functions.'
+   ]},
+  {id:'s5f', name:'Modified records — filter on nested field, no function',   category:'S5 · API Response', forSample:'s05',
+   expr:'$.response.entity.ExternalReferenceLookup[ModifyDate != null].{\n  "ID":         ID,\n  "ModifyDate": ModifyDate,\n  "ModifyUser": ModifyUser,\n  "Conflicted": Conflicted\n}',
+   steps:[
+     'Navigates to `ExternalReferenceLookup` using the standard three-level path.',
+     '`[ModifyDate != null]` filters to only records that have a modification date — no function needed.',
+     '`.{...}` shapes each matching record to only the audit-relevant fields.',
+     'The `ModifyDate` field is a nested scalar — filters on scalars and on nested object fields use identical predicate syntax.'
+   ]},
+
+  // ── S6 · No-function / simpler alternatives ────────────────────────────────
+  {id:'s6e', name:'Accrual total per GL account — direct filter, no variables', category:'S6 · Reconciliation', forSample:'s06',
+   expr:'{\n  "gl_315104": $round($sum(recon_array[gl_account = 315104].accrual_amount), 2),\n  "gl_315105": $round($sum(recon_array[gl_account = 315105].accrual_amount), 2),\n  "gl_315106": $round($sum(recon_array[gl_account = 315106].accrual_amount), 2)\n}',
+   steps:[
+     '`recon_array[gl_account = 315104]` filters the accrual records to one GL account — no variable binding.',
+     '`.accrual_amount` extracts that field from every matching record into an array.',
+     '`$sum(...)` sums them; `$round(..., 2)` handles floating-point precision in financial values.',
+     'The pattern repeats per GL account inside one object constructor — readable, function-free.',
+     'Trade-off vs the dynamic `$distinct` grouping approach: hardcodes GL values but needs zero variable capture.'
+   ]},
+  {id:'s6f', name:'Quick stats — count, total, min, max, avg accrual',        category:'S6 · Reconciliation', forSample:'s06',
+   expr:'{\n  "count":      $count(recon_array),\n  "total":      $round($sum(recon_array.accrual_amount), 2),\n  "minAccrual": $min(recon_array.accrual_amount),\n  "maxAccrual": $max(recon_array.accrual_amount),\n  "avgAccrual": $round($average(recon_array.accrual_amount), 2)\n}',
+   steps:[
+     'All five aggregates — `$count`, `$sum`, `$min`, `$max`, `$average` — are built-in and need no lambda.',
+     '`recon_array.accrual_amount` extracts the field from every row in one step.',
+     'Each aggregate operates on that same extracted array; results are combined into a summary object.',
+     'This is the simplest reconciliation overview: one expression, five numbers, no variables or functions.'
+   ]},
+  {id:'s6g', name:'Pending agreements — filter source_b by status',           category:'S6 · Reconciliation', forSample:'s06',
+   expr:'source_b[status = "pending"]',
+   steps:[
+     '`source_b` accesses the named array at the root of the input object.',
+     '`[status = "pending"]` is a filter predicate — returns only records where `status` equals "pending".',
+     'The full matching record objects are returned (not just a single field).',
+     'Single-line, no functions — the simplest possible filter: path + predicate.'
+   ]},
+
+  // ── S1 · String / numeric function use cases ──────────────────────────────
+  {id:'s1h', name:'Currency format — $formatNumber + stock value',          category:'S1 · Flat Array', forSample:'s01',
+   expr:'$.{\n  "name":       name,\n  "retail":     "$" & $formatNumber(price, "#,##0.00"),\n  "stockValue": "$" & $formatNumber($round(stock * price, 2), "#,##0.00")\n}',
+   steps:[
+     '`$formatNumber(value, picture)` formats a number using an XPath picture string.',
+     '`"#,##0.00"` means: comma-separate thousands, always show 2 decimal places.',
+     '`"$" &` prepends a dollar sign — `$formatNumber` returns a string so concatenation works directly.',
+     '`$round(stock * price, 2)` computes inventory value first; `$formatNumber` then renders it as `"$4,498.50"`.',
+     'Useful for generating human-readable financial reports from raw numeric data.'
+   ]},
+  {id:'s1i', name:'$reverse — flip product list order',                     category:'S1 · Flat Array', forSample:'s01',
+   expr:'$reverse($).{"name":name,"price":price}',
+   steps:[
+     '`$reverse(array)` returns a new array with all items in opposite order.',
+     'The result is immediately piped into `.{...}` to project only the fields needed.',
+     'Combine with `$sort` before reversing to get, e.g., ascending-then-reverse = descending without a comparator function.',
+     'Returns a new array — the original input is never mutated.'
+   ]},
+  {id:'s1j', name:'Generate codes + URL slugs — $substring, $lowercase, $replace', category:'S1 · Flat Array', forSample:'s01',
+   expr:'$.{\n  "name":     name,\n  "code":     $uppercase($substring(category, 0, 3)) & "-" & $string(id),\n  "urlSlug":  $lowercase(name) ~> $replace(" ", "-")\n}',
+   steps:[
+     '`$substring(category, 0, 3)` extracts the first 3 characters of the category name.',
+     '`$uppercase(...)` converts those 3 chars to uppercase; `& "-" & $string(id)` appends a hyphen and the numeric id to form a product code like `"TOO-1"`.',
+     '`$lowercase(name)` lowercases the product name, then `~> $replace(" ", "-")` chains into a replace call that swaps spaces for hyphens.',
+     '`~>` (chain/pipe) passes the left-side result as the first argument of the right-side function.',
+     'Result: each product gets a short catalogue code and a URL-safe slug — two transforms in one pass.'
+   ]},
+
+  // ── S2 · Date parsing, $sift, transform operator ──────────────────────────
+  {id:'s2h', name:'Parse DERP date /Date(ms-offset)/ → ISO date string',    category:'S2 · Integration Records', forSample:'s02',
+   expr:'$.{\n  "Id":           Id,\n  "JobRef":        original.JobNumber & "-" & original.LineNumber,\n  "PromiseDateISO": original.PromiseDate != null\n    ? $fromMillis(\n        $number($substringBefore($substringAfter(original.PromiseDate, "("), "-")),\n        \'[Y0001]-[M01]-[D01]\'\n      )\n    : null\n}',
+   steps:[
+     'The "DERP date" format `/Date(1665061384110-0400)/` is an older Microsoft/Dynamics pattern encoding epoch-milliseconds plus timezone offset.',
+     '`$substringAfter(str, "(")` strips everything up to and including the `(`, leaving `"1665061384110-0400)/"` .',
+     '`$substringBefore(result, "-")` then trims at the first `-`, isolating the millisecond number `"1665061384110"`.',
+     '`$number(...)` converts that string to a numeric timestamp; `$fromMillis(ms, picture)` converts to a human-readable date.',
+     '`\'[Y0001]-[M01]-[D01]\'` is an XPath picture string meaning 4-digit year, 2-digit month, 2-digit day.',
+     'The `!= null` guard handles records where `PromiseDate` is absent — those get `null` in the output.'
+   ]},
+  {id:'s2i', name:'$sift — remove null/empty fields (cleaner than $each)',   category:'S2 · Integration Records', forSample:'s02',
+   expr:'$.($sift($, function($v){ $v != null and $v != "" }))',
+   steps:[
+     '`$sift(object, function($v, $k){...})` returns a copy of the object keeping only key-value pairs where the function returns `true`.',
+     '`$v != null and $v != ""` rejects null values and empty strings; any other value (including `false` and `0`) is kept.',
+     '`$.(...)` maps the `$sift` call over every item in the root array.',
+     'Compared to the `$each`+`$merge` version, `$sift` is more concise because it works directly on an object without needing to reconstruct it from an array of fragments.',
+     'Result: records like item 3 (which had `IsNewOrder: null` and `Priority: null`) are returned with those fields absent.'
+   ]},
+  {id:'s2j', name:'Transform ~>|...|  — add field + delete "original" key', category:'S2 · Integration Records', forSample:'s02',
+   expr:'$ ~> |$|{"jobRef": original.JobNumber & "-" & original.LineNumber}, ["original"]|',
+   steps:[
+     '`~>|path|updates, deletes|` is JSONata\'s transform (update) operator — it creates a modified copy of the input.',
+     '`$ ~> |$|...` means: take the root input, and for every object matched by path `$` (each array item), apply the transform.',
+     'The first part `{"jobRef": original.JobNumber & "-" & original.LineNumber}` adds a new computed field.',
+     'The second part `["original"]` is a delete list — those field names are removed from each output object.',
+     'The input is never mutated; the operator always produces a new document.',
+     'This is the most concise way to simultaneously add fields and remove unwanted wrapper keys.'
+   ]},
+
+  // ── S3 · $zip, $reduce, $append ───────────────────────────────────────────
+  {id:'s3g', name:'$zip — pair customers with their order totals',           category:'S3 · Array + Sub-Arrays', forSample:'s03',
+   expr:'$zip($.customer, $.($round($sum(items.(qty * price)), 2)))',
+   steps:[
+     '`$zip(array1, array2, ...)` combines multiple arrays element-by-element into an array of arrays.',
+     '`$.customer` extracts all customer names from the root array: `["Alice", "Bob", "Carol", "Dan"]`.',
+     '`$.($round($sum(items.(qty*price)), 2))` maps over each order to compute its line-item total.',
+     '`$zip` pairs them positionally: `[["Alice", 1049], ["Bob", 79], ...]`.',
+     'Useful for building parallel-column tables or for passing matched pairs to downstream processing.'
+   ]},
+  {id:'s3h', name:'$reduce — fold all line-item prices into a running total', category:'S3 · Array + Sub-Arrays', forSample:'s03',
+   expr:'$reduce($.items.(qty * price), function($acc, $v){ $acc + $v })',
+   steps:[
+     '`$.items.(qty * price)` first flattens all line items across all orders and computes each subtotal.',
+     '`$reduce(array, function($acc, $curr){...})` applies the function cumulatively, left to right.',
+     'The first call receives the first two elements; subsequent calls receive the running accumulator and the next element.',
+     'Result: a single number — the grand total of all line-item values across all orders.',
+     '`$sum($.items.(qty*price))` achieves the same result more concisely; `$reduce` is shown here to demonstrate the fold pattern for cases where built-in aggregates are insufficient.'
+   ]},
+  {id:'s3i', name:'$append — merge item lists from two specific orders',     category:'S3 · Array + Sub-Arrays', forSample:'s03',
+   expr:'$append(\n  $[orderId = "ORD-001"].items,\n  $[orderId = "ORD-004"].items\n).{"product":name,"qty":qty,"unitPrice":price}',
+   steps:[
+     '`$[orderId = "ORD-001"]` filters to the matching order; `.items` extracts its items sub-array.',
+     '`$append(array1, array2)` concatenates two arrays into one without flattening nested arrays.',
+     'The result is immediately shaped with `.{...}` to produce clean output rows.',
+     'Use `$append` when you need to join arrays from two different paths — as opposed to `$.items` which flattens all orders together.'
+   ]},
+
+  // ── S4 · $spread, $reduce ─────────────────────────────────────────────────
+  {id:'s4g', name:'$spread — explode an object into key-value pair array',   category:'S4 · Deep Hierarchy', forSample:'s04',
+   expr:'$spread($.departments[0].employees[0])',
+   steps:[
+     '`$.departments[0]` picks the first department from the first company; `.employees[0]` picks the first employee.',
+     '`$spread(object)` converts a single object into an array of single-key objects: `[{"id":"E01"}, {"name":"Alice"}, ...]`.',
+     'Each element is a separate `{key: value}` pair — useful for iterating over an object\'s properties when the field names are not known in advance.',
+     'Pairs naturally with `$each` or `$map` for dynamic object processing, or with `$merge` to reconstruct.'
+   ]},
+  {id:'s4h', name:'$reduce — total payroll across all companies and depts',  category:'S4 · Deep Hierarchy', forSample:'s04',
+   expr:'$reduce($.departments.employees.salary, function($a, $c){ $a + $c })',
+   steps:[
+     '`$.departments.employees.salary` traverses companies → departments → employees and collects every salary value into one flat array.',
+     '`$reduce(array, function($acc, $curr){...})` folds that array into a single value by adding each salary to a running total.',
+     'The fold initialises with the first element; each subsequent call receives `($runningTotal, $nextSalary)`.',
+     'Result: total payroll across the entire company hierarchy — equivalent to `$sum($.departments.employees.salary)` but demonstrating the fold pattern.'
+   ]},
+
+  // ── S5 · $lookup, $keys ───────────────────────────────────────────────────
+  {id:'s5g', name:'$lookup — dynamic field access by key name string',       category:'S5 · API Response', forSample:'s05',
+   expr:'(\n  $rec  := $.response.entity.ExternalReferenceLookup[0];\n  $field := "ExternalID";\n  {\n    "record": $rec,\n    "dynamicValue": $lookup($rec, $field)\n  }\n)',
+   steps:[
+     '`$lookup(object, key)` retrieves the value of a field using a runtime-determined key string.',
+     'Unlike dot notation (`obj.field`), `$lookup` can use a variable or computed string as the key name.',
+     'Here `$field := "ExternalID"` binds the target field name — in a real pipeline this could be a parameter or a value from another field.',
+     '`$lookup($rec, $field)` returns `"NEW"` — the same as `$rec.ExternalID` but resolved dynamically.',
+     'Essential when the field to access is only known at runtime (e.g., reading a config-driven field name from a separate object).'
+   ]},
+  {id:'s5h', name:'$keys — discover all field names of a lookup record',     category:'S5 · API Response', forSample:'s05',
+   expr:'{\n  "fields":      $keys($.response.entity.ExternalReferenceLookup[0]),\n  "recordCount": $count($.response.entity.ExternalReferenceLookup)\n}',
+   steps:[
+     '`$keys(object)` returns an array of all property names of that object.',
+     'Navigating to the first element `[0]` and calling `$keys` reveals the schema of the nested records without needing to know it in advance.',
+     '`$count(...)` is added alongside to also show the total number of lookup records.',
+     'Combine `$keys` with `$map` or `$each` to iterate dynamically over fields — useful for schema-agnostic transformations.'
+   ]},
+
+  // ── S6 · $abs, $formatNumber, $distinct date ─────────────────────────────
+  {id:'s6h', name:'$abs — gross accrual flow (sum of absolute values)',      category:'S6 · Reconciliation', forSample:'s06',
+   expr:'{\n  "netAccrual":   $round($sum(recon_array.accrual_amount), 2),\n  "grossFlow":    $round($sum(recon_array.($abs(accrual_amount))), 2),\n  "netVsGross":   $round($abs($sum(recon_array.accrual_amount)) / $sum(recon_array.($abs(accrual_amount))) * 100, 1) & "% net"\n}',
+   steps:[
+     '`$sum(recon_array.accrual_amount)` gives the net total — credits and debits cancel each other out.',
+     '`$abs(value)` returns the absolute (non-negative) value of a number.',
+     '`recon_array.($abs(accrual_amount))` maps `$abs` over every accrual amount in the array.',
+     '`$sum(...)` of those absolute values gives the gross flow — the total money movement regardless of direction.',
+     'The ratio `|net| / gross` expressed as a percentage shows how much of the gross flow nets off — a common reconciliation health metric.'
+   ]},
+  {id:'s6i', name:'$formatNumber — render totals as currency strings',       category:'S6 · Reconciliation', forSample:'s06',
+   expr:'{\n  "grandTotal": "$" & $formatNumber($abs($round($sum(recon_array.accrual_amount), 2)), "#,##0.00"),\n  "grossFlow":  "$" & $formatNumber($round($sum(recon_array.($abs(accrual_amount))), 2), "#,##0.00"),\n  "pendingAmt": "$" & $formatNumber($abs(source_b[status = "pending"].posted_amount), "#,##0.00")\n}',
+   steps:[
+     '`$formatNumber(number, "#,##0.00")` formats a number with comma thousands separators and 2 decimal places.',
+     '`"$" &` prepends a dollar sign — string concatenation on the formatted string.',
+     '`$abs(...)` ensures the output is always positive even when the underlying value is negative (useful for credit/debit display).',
+     'Three different aggregations are formatted in one expression object — grand total, gross flow, and the pending source_b amount.',
+     'Replace the picture string with locale-specific formats such as `"#.##0,00"` for European conventions.'
+   ]},
+  {id:'s6j', name:'Distinct posting dates — timeline of entries',            category:'S6 · Reconciliation', forSample:'s06',
+   expr:'$sort($distinct(recon_array.posting_date)).{\n  "date": $,\n  "count": $count($$.recon_array[posting_date = $]),\n  "netForDate": $round($sum($$.recon_array[posting_date = $].accrual_amount), 2)\n}',
+   steps:[
+     '`$distinct(recon_array.posting_date)` extracts a deduplicated list of posting dates.',
+     '`$sort(...)` orders them chronologically (dates stored as YYYYMMDD strings sort correctly lexicographically).',
+     '`.{...}` maps over each unique date; inside, `$` refers to the current date string.',
+     '`$$` is the root document — needed here because `$` has been rebound to the current date; `$$.recon_array` re-accesses the accrual array from root.',
+     '`$count(...)` and `$sum(...)` with a filter produce count and net accrual per date, giving a timeline view of the posting activity.'
+   ]}
+];
+
+// ─── AUTO-ADAPT ENGINE ───────────────────────────────────────────────────────
+
+// Semantic alias groups: if a script uses a word in the same group as an available
+// key, we substitute it. Order within a group does not matter.
+const ALIAS_GROUPS = [
+  // Identifiers / primary keys
+  ['id','key','code','empId','userId','orderId','productId','sku','isbn','txnId',
+   'eventId','apptId','deviceId','shipmentId','warehouseId'],
+  // Primary label / name
+  ['name','title','label','fullName','displayName','username','student','patient',
+   'customer','metric','restaurant','company'],
+  // Contact
+  ['email','mail','contact','emailAddress'],
+  // Monetary value
+  ['price','cost','amount','value','salary','copay','rate','budget','boxOffice','balance'],
+  // Quantity / size / count
+  ['qty','quantity','stock','capacity','registered','forks','checkouts','views',
+   'openIssues','pages','battery','stars','count'],
+  // Date / time
+  ['date','createdAt','updatedAt','timestamp','joined','published','lastCommit',
+   'lastLogin','departure','arrival','reportDate','dob','start','end','time'],
+  // Status / boolean flag
+  ['status','condition','active','available','isActive'],
+  // Category / classification
+  ['category','type','role','genre','specialty','department','plan','language'],
+  // Score / numeric rating
+  ['score','rating','gpa','points','humidity','imdb'],
+  // Location / place
+  ['region','location','area','city','room'],
+  // Author / owner / responsible person
+  ['author','owner','creator','rep','manager','director','speaker','carrier','doctor'],
+  // Collection tags
+  ['tags','skills','topics','extracurricular','cast'],
+  // Nested collection
+  ['items','products','members','comments','readings','cargo','kpis','data','menu'],
+  // Aggregate / target
+  ['total','sum','target','previousValue','q1','q2','q3','q4'],
+  // Free text
+  ['description','text','content','notes','body'],
+];
+
+// Collect every key name from a JSON value (up to maxDepth levels deep).
+function getAllKeys(obj, depth, maxDepth) {
+  depth = depth || 0; maxDepth = maxDepth || 3;
+  if (depth > maxDepth || obj === null || typeof obj !== 'object') return new Set();
+  const keys = new Set();
+  if (Array.isArray(obj)) {
+    obj.slice(0, 10).forEach(item => getAllKeys(item, depth + 1, maxDepth).forEach(k => keys.add(k)));
+  } else {
+    Object.keys(obj).forEach(k => {
+      keys.add(k);
+      getAllKeys(obj[k], depth + 1, maxDepth).forEach(k2 => keys.add(k2));
+    });
+  }
+  return keys;
+}
+
+const _JSONATA_KW = new Set([
+  'and','or','in','true','false','null','function','return','if','then','else',
+  'instance','of','type','each','map','filter','reduce','sift','single','error',
+  'assert','not'
+]);
+
+// Extract bare property-name identifiers from a JSONata expression.
+// Skips: string literals, regex literals, $-prefixed tokens (functions/vars).
+function extractPropertyRefs(expr) {
+  const cleaned = expr
+    .replace(/"(?:[^"\\]|\\.)*"/g, '""')
+    .replace(/'(?:[^'\\]|\\.)*'/g, "''")
+    .replace(/\/[^/\n]+\/[gim]*/g, '//');
+
+  const refs = new Set();
+  // Match either a $-token (skip) or a bare identifier (capture group 1)
+  const re = /\$[a-zA-Z_][a-zA-Z0-9_]*|([a-zA-Z_][a-zA-Z0-9_]*)/g;
+  let m;
+  while ((m = re.exec(cleaned)) !== null) {
+    if (m[1] && !_JSONATA_KW.has(m[1])) refs.add(m[1]);
+  }
+  return refs;
+}
+
+// Simple similarity score in [0,1] between two lowercased strings.
+function _sim(a, b) {
+  if (a === b) return 1;
+  if (a.includes(b) || b.includes(a))
+    return 0.75 * Math.min(a.length, b.length) / Math.max(a.length, b.length);
+  // Longest common substring
+  let lcs = 0;
+  for (let i = 0; i < a.length; i++) {
+    for (let j = 0; j < b.length; j++) {
+      let k = 0;
+      while (i + k < a.length && j + k < b.length && a[i+k] === b[j+k]) k++;
+      if (k > lcs) lcs = k;
+    }
+  }
+  return lcs >= 3 ? (lcs / Math.max(a.length, b.length)) * 0.6 : 0;
+}
+
+// Find the best replacement for `missing` from the `available` key list.
+// Returns {match, how} or null.
+function findBestMatch(missing, available) {
+  const ml = missing.toLowerCase();
+
+  // 1. Alias-group lookup — semantically equivalent fields
+  for (const group of ALIAS_GROUPS) {
+    const groupL = group.map(g => g.toLowerCase());
+    if (groupL.includes(ml)) {
+      for (const avail of available) {
+        if (groupL.includes(avail.toLowerCase())) return { match: avail, how: 'alias' };
+      }
+    }
+  }
+
+  // 2. String-similarity fallback
+  let best = null, bestScore = 0.38;
+  for (const avail of available) {
+    const s = _sim(ml, avail.toLowerCase());
+    if (s > bestScore) { bestScore = s; best = avail; }
+  }
+  return best ? { match: best, how: 'similar' } : null;
+}
+
+// Rewrite `expr`, substituting bare identifiers according to `mapping`,
+// while leaving string literals, regex literals, and $-prefixed tokens untouched.
+function adaptExpression(expr, mapping) {
+  return expr.replace(
+    /"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|\/[^/\n]+\/[gim]*|\$[a-zA-Z_][a-zA-Z0-9_]*|([a-zA-Z_][a-zA-Z0-9_]*)/g,
+    (match, ident) => (ident !== undefined && mapping[ident]) ? mapping[ident] : match
+  );
+}
+
+// ── adapt state ──
+let _autoAdapt = true;
+let _origExpr   = null;   // expression before last adaptation
+let _adaptMap   = {};
+
+function toggleAutoAdapt() {
+  _autoAdapt = !_autoAdapt;
+  const btn = document.getElementById('adaptToggle');
+  if (_autoAdapt) {
+    btn.textContent = '⚡ Auto-Adapt: ON';
+    btn.className = 'btn btn-adapt-on';
+    runAutoAdapt();
+  } else {
+    btn.textContent = '⚡ Auto-Adapt: OFF';
+    btn.className = 'btn btn-secondary';
+    restoreOriginal(true);   // restore silently (don't clear _origExpr so user can re-enable)
+  }
+}
+
+function runAutoAdapt() {
+  if (!_autoAdapt) return;
+
+  const jsonStr = document.getElementById('jsonInput').value.trim();
+  const expr    = document.getElementById('scriptInput').value.trim();
+  if (!jsonStr || !expr) return;
+
+  let data;
+  try { data = JSON.parse(jsonStr); } catch(e) { return; }
+
+  const available = [...getAllKeys(data)];
+  const used      = extractPropertyRefs(expr);
+
+  const mapping = {};
+  for (const ref of used) {
+    if (!available.includes(ref)) {
+      const hit = findBestMatch(ref, available);
+      if (hit) mapping[ref] = hit.match;
+    }
+  }
+
+  if (Object.keys(mapping).length === 0) {
+    hideAdaptBanner();
+    _origExpr = null;
+    return;
+  }
+
+  // Snapshot the pre-adaptation expression the first time
+  if (_origExpr === null) _origExpr = expr;
+
+  const adapted = adaptExpression(expr, mapping);
+  _adaptMap = mapping;
+  document.getElementById('scriptInput').value = adapted;
+  showAdaptBanner(mapping);
+}
+
+function restoreOriginal(silent) {
+  if (_origExpr !== null) {
+    document.getElementById('scriptInput').value = _origExpr;
+    if (!silent) { _origExpr = null; _adaptMap = {}; }
+    hideAdaptBanner();
+  }
+}
+
+function showAdaptBanner(mapping) {
+  const banner  = document.getElementById('adaptBanner');
+  const entries = Object.entries(mapping);
+  const chips   = entries.map(([f, t]) =>
+    `<span class="adapt-chip"><span class="adapt-from">${f}</span><span class="adapt-arrow"> → </span><span class="adapt-to">${t}</span></span>`
+  ).join(' ');
+  banner.innerHTML =
+    `<span class="adapt-label">⚡ ${entries.length} field${entries.length > 1 ? 's' : ''} adapted:</span> ${chips}` +
+    `<button class="adapt-restore" onclick="restoreOriginal()">↩ Restore original</button>`;
+  banner.style.display = 'flex';
+}
+
+function hideAdaptBanner() {
+  document.getElementById('adaptBanner').style.display = 'none';
+}
+
+// ─── STEPS PANE ───────────────────────────────────────────────────────────────
+let _stepsCollapsed = false;
+
+function showSteps(scriptId) {
+  const builtin = SCRIPTS.find(s => s.id === scriptId);
+  const pane    = document.getElementById('stepsPane');
+  const list    = document.getElementById('stepsList');
+  if (!builtin || !builtin.steps || !builtin.steps.length) {
+    pane.style.display = 'none';
+    return;
+  }
+  list.innerHTML = builtin.steps
+    .map(step => '<li>' + step.replace(/`([^`]+)`/g, '<code>$1</code>') + '</li>')
+    .join('');
+  pane.style.display = 'flex';
+  pane.style.flexDirection = 'column';
+  document.getElementById('stepsBody').style.display = _stepsCollapsed ? 'none' : '';
+  document.getElementById('stepsToggleBtn').textContent = _stepsCollapsed ? '▼ show' : '▲ hide';
+}
+
+function toggleStepsPane() {
+  _stepsCollapsed = !_stepsCollapsed;
+  document.getElementById('stepsBody').style.display = _stepsCollapsed ? 'none' : '';
+  document.getElementById('stepsToggleBtn').textContent = _stepsCollapsed ? '▼ show' : '▲ hide';
+}
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+// Version bump forces localStorage reset when built-in samples/scripts change.
+const SCHEMA_VERSION = '6';
+if (localStorage.getItem('jsonata_schema_v') !== SCHEMA_VERSION) {
+  localStorage.removeItem('jsonata_samples');
+  localStorage.removeItem('jsonata_scripts');
+  localStorage.setItem('jsonata_schema_v', SCHEMA_VERSION);
+}
+let samples = JSON.parse(localStorage.getItem('jsonata_samples') || 'null') || [...SAMPLES];
+let scripts = JSON.parse(localStorage.getItem('jsonata_scripts') || 'null') || [...SCRIPTS];
+
+function persist() {
+  localStorage.setItem('jsonata_samples', JSON.stringify(samples));
+  localStorage.setItem('jsonata_scripts', JSON.stringify(scripts));
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+function buildSampleSelect() {
+  const sel = document.getElementById('sampleSelect');
+  sel.innerHTML = '';
+  const groups = {};
+  samples.forEach(s => {
+    if (!groups[s.category]) groups[s.category] = [];
+    groups[s.category].push(s);
+  });
+  Object.keys(groups).forEach(cat => {
+    const og = document.createElement('optgroup');
+    og.label = cat;
+    groups[cat].forEach(s => {
+      const o = document.createElement('option');
+      o.value = s.id;
+      o.textContent = s.name;
+      og.appendChild(o);
+    });
+    sel.appendChild(og);
+  });
+}
+
+function buildScriptSelects(activeSampleId) {
+  // Show generic scripts (no forSample) + scripts tied to the active sample.
+  // Custom samples (user-added) show everything.
+  const isCustom = activeSampleId && String(activeSampleId).startsWith('custom_');
+  const visible = scripts.filter(s =>
+    !s.forSample || s.forSample === activeSampleId || isCustom
+  );
+
+  const currentVal = document.getElementById('scriptSelect').value;
+
+  [document.getElementById('scriptSelect'), document.getElementById('scriptSelect2')].forEach(sel => {
+    sel.innerHTML = '';
+    const groups = {};
+    visible.forEach(s => {
+      if (!groups[s.category]) groups[s.category] = [];
+      groups[s.category].push(s);
+    });
+    Object.keys(groups).forEach(cat => {
+      const og = document.createElement('optgroup');
+      // Shorten the sample-specific group label to just "Sample Scripts"
+      og.label = cat.startsWith('S') && cat.includes('·') ? 'Sample Scripts' : cat;
+      groups[cat].forEach(s => {
+        const o = document.createElement('option');
+        o.value = s.id;
+        o.textContent = s.name;
+        og.appendChild(o);
+      });
+      sel.appendChild(og);
+    });
+    // Preserve selection if the current value is still visible
+    if (currentVal && visible.some(s => s.id === currentVal)) {
+      sel.value = currentVal;
+    }
+  });
+}
+
+function loadSample() {
+  const id = document.getElementById('sampleSelect').value;
+  const s = samples.find(x => x.id === id);
+  if (!s) return;
+  document.getElementById('jsonInput').value = JSON.stringify(s.json, null, 2);
+  document.getElementById('jsonTag').textContent = s.category;
+
+  // Rebuild script dropdown to show only matching scripts for this sample
+  buildScriptSelects(id);
+
+  // Auto-select the first script specific to this sample (not generic)
+  const firstMatch = scripts.find(sc => sc.forSample === id);
+  if (firstMatch) {
+    document.getElementById('scriptSelect').value  = firstMatch.id;
+    document.getElementById('scriptSelect2').value = firstMatch.id;
+  }
+
+  // Load whichever script is now selected (runs auto-adapt internally)
+  loadScript();
+  setStatus('Loaded: ' + s.name);
+}
+
+function loadScript() {
+  const id = document.getElementById('scriptSelect').value;
+  const s = scripts.find(x => x.id === id);
+  if (!s) return;
+  document.getElementById('scriptSelect2').value = id;
+  document.getElementById('scriptInput').value = s.expr;
+  document.getElementById('scriptTag').textContent = s.category;
+  setStatus('Script: ' + s.name);
+  // Reset tracking and adapt fresh expression to current payload
+  _origExpr = null;
+  hideAdaptBanner();
+  runAutoAdapt();
+  showSteps(id);
+}
+
+// ─── JSON → CSV ───────────────────────────────────────────────────────────────
+let _lastResult  = undefined;
+let _outputMode  = 'json';
+
+function csvEscapeCell(v) {
+  if (v === null || v === undefined) return '';
+  if (typeof v === 'object') v = JSON.stringify(v);
+  else v = String(v);
+  return /[,"\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+}
+
+function jsonToCSV(data) {
+  if (data === null || data === undefined) return '';
+  if (typeof data !== 'object') return 'value\n' + csvEscapeCell(data);
+  const rows = Array.isArray(data) ? data : [data];
+  if (rows.length === 0) return '';
+  // array of scalars (e.g. $distinct result)
+  if (rows.every(r => r === null || typeof r !== 'object')) {
+    return 'value\n' + rows.map(csvEscapeCell).join('\n');
+  }
+  // array of arrays (e.g. $zip result)
+  if (rows.every(r => Array.isArray(r))) {
+    const maxLen = Math.max(...rows.map(r => r.length));
+    const hdrs   = Array.from({length: maxLen}, (_, i) => 'col_' + i);
+    return [hdrs.join(','), ...rows.map(r => hdrs.map((_, i) => csvEscapeCell(r[i])).join(','))].join('\n');
+  }
+  // array of objects (standard)
+  const headerSet = new Set();
+  rows.forEach(r => { if (r && typeof r === 'object' && !Array.isArray(r)) Object.keys(r).forEach(k => headerSet.add(k)); });
+  const hdrs = [...headerSet];
+  return [
+    hdrs.join(','),
+    ...rows.map(r => {
+      if (!r || typeof r !== 'object' || Array.isArray(r)) return csvEscapeCell(r);
+      return hdrs.map(h => csvEscapeCell(r[h])).join(',');
+    })
+  ].join('\n');
+}
+
+function setOutputMode(mode) {
+  _outputMode = mode;
+  document.getElementById('btnModeJson').className = 'btn-mode' + (mode === 'json' ? ' active' : '');
+  document.getElementById('btnModeCsv').className  = 'btn-mode' + (mode === 'csv'  ? ' active' : '');
+  if (_lastResult !== undefined) renderOutputResult();
+}
+
+function renderOutputResult() {
+  const out = document.getElementById('outputBox');
+  if (_outputMode === 'csv') {
+    const csv = jsonToCSV(_lastResult);
+    out.className   = 'output-box success csv-mode';
+    out.textContent = csv || '(empty — result cannot be represented as CSV)';
+  } else {
+    out.className   = 'output-box success';
+    out.textContent = _lastResult === undefined ? '(no result / undefined)' : JSON.stringify(_lastResult, null, 2);
+  }
+}
+
+function downloadCSV() {
+  if (_lastResult === undefined) { setStatus('No result to download', 'err'); return; }
+  const csv  = jsonToCSV(_lastResult);
+  const blob = new Blob([csv], {type: 'text/csv'});
+  const a    = document.createElement('a');
+  a.href     = URL.createObjectURL(blob);
+  a.download = 'jsonata-result.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  setStatus('CSV downloaded');
+}
+
+// ─── TRANSFORM ────────────────────────────────────────────────────────────────
+async function runTransform() {
+  const jsonStr = document.getElementById('jsonInput').value.trim();
+  const exprStr = document.getElementById('scriptInput').value.trim();
+  const out = document.getElementById('outputBox');
+  const tag = document.getElementById('outputStatus');
+
+  if (!jsonStr) { setStatus('No input JSON', 'err'); return; }
+  if (!exprStr) { setStatus('No expression', 'err'); return; }
+
+  let data;
+  try { data = JSON.parse(jsonStr); }
+  catch(e) {
+    out.className = 'output-box error';
+    out.textContent = 'JSON Parse Error:\n' + e.message;
+    tag.textContent = 'ERR';
+    tag.className = 'tag orange';
+    setStatus('JSON parse error', 'err');
+    return;
+  }
+
+  const t0 = performance.now();
+  try {
+    const expr = jsonata(exprStr);
+    const result = await expr.evaluate(data);
+    const t1 = performance.now();
+    const ms = (t1 - t0).toFixed(1);
+    _lastResult = result;
+    renderOutputResult();
+    tag.textContent = 'OK';
+    tag.className = 'tag green';
+    setStatus('Transform OK', 'ok');
+    document.getElementById('timeMs').textContent = ms + ' ms';
+  } catch(e) {
+    const t1 = performance.now();
+    out.className = 'output-box error';
+    out.textContent = 'JSONata Error:\n' + e.message;
+    tag.textContent = 'ERR';
+    tag.className = 'tag orange';
+    setStatus('Expression error', 'err');
+    document.getElementById('timeMs').textContent = (t1-t0).toFixed(1) + ' ms';
+  }
+}
+
+function formatJson() {
+  const ta = document.getElementById('jsonInput');
+  try {
+    ta.value = JSON.stringify(JSON.parse(ta.value), null, 2);
+    setStatus('JSON formatted');
+  } catch(e) {
+    setStatus('Invalid JSON — cannot format', 'err');
+  }
+}
+
+function copyText(id) {
+  navigator.clipboard.writeText(document.getElementById(id).value);
+  setStatus('Copied to clipboard');
+}
+
+function copyOutput() {
+  navigator.clipboard.writeText(document.getElementById('outputBox').textContent);
+  setStatus(_outputMode === 'csv' ? 'CSV copied' : 'Output copied');
+}
+
+function setStatus(msg, level) {
+  const el = document.getElementById('statusMsg');
+  el.textContent = msg;
+  el.className = level === 'ok' ? 'ok' : level === 'err' ? 'err' : '';
+}
+
+// ─── MODAL ────────────────────────────────────────────────────────────────────
+function openModal(name) {
+  if (name === 'addScript') {
+    // Label the "current sample" option with the actual sample name
+    const curSample = samples.find(s => s.id === document.getElementById('sampleSelect').value);
+    const shortName = curSample ? curSample.name.replace(/^S\d+ · /, '') : 'current sample';
+    document.getElementById('newScriptScope').options[0].textContent =
+      'Current sample only — ' + shortName;
+  }
+  document.getElementById('modal-' + name).classList.add('open');
+}
+function closeModal(name) {
+  document.getElementById('modal-' + name).classList.remove('open');
+}
+
+function saveNewJson() {
+  const name = document.getElementById('newJsonName').value.trim();
+  const category = document.getElementById('newJsonCategory').value;
+  const content = document.getElementById('newJsonContent').value.trim();
+  if (!name || !content) { alert('Name and JSON content are required'); return; }
+  let json;
+  try { json = JSON.parse(content); } catch(e) { alert('Invalid JSON:\n' + e.message); return; }
+  const id = 'custom_' + Date.now();
+  samples.push({ id, name, category, json });
+  persist();
+  buildSampleSelect();
+  document.getElementById('sampleSelect').value = id;
+  loadSample();
+  closeModal('addJson');
+  document.getElementById('newJsonName').value = '';
+  document.getElementById('newJsonContent').value = '';
+  setStatus('Sample "' + name + '" added');
+}
+
+function saveNewScript() {
+  const name     = document.getElementById('newScriptName').value.trim();
+  const category = document.getElementById('newScriptCategory').value;
+  const expr     = document.getElementById('newScriptContent').value.trim();
+  const scope    = document.getElementById('newScriptScope').value;
+  if (!name || !expr) { alert('Name and expression are required'); return; }
+  const activeSampleId = document.getElementById('sampleSelect').value;
+  const forSample = scope === 'all' ? null : activeSampleId;
+  const id = 'custom_' + Date.now();
+  scripts.push({ id, name, category, expr, forSample });
+  persist();
+  buildScriptSelects(activeSampleId);
+  document.getElementById('scriptSelect').value  = id;
+  document.getElementById('scriptSelect2').value = id;
+  loadScript();
+  closeModal('addScript');
+  document.getElementById('newScriptName').value    = '';
+  document.getElementById('newScriptContent').value = '';
+  setStatus('Script "' + name + '" added');
+}
+
+// Close modal on backdrop click
+document.querySelectorAll('.modal-backdrop').forEach(bd => {
+  bd.addEventListener('click', e => { if (e.target === bd) bd.classList.remove('open'); });
+});
+
+// ─── RESIZERS ────────────────────────────────────────────────────────────────
+function makeResizable(resizerId, leftPaneId, rightPaneId) {
+  const resizer = document.getElementById(resizerId);
+  const left = document.getElementById(leftPaneId);
+  const right = document.getElementById(rightPaneId);
+  let startX, startLeftFlex, startRightFlex;
+
+  resizer.addEventListener('mousedown', e => {
+    startX = e.clientX;
+    startLeftFlex = parseFloat(getComputedStyle(left).flexGrow) || 1;
+    startRightFlex = parseFloat(getComputedStyle(right).flexGrow) || 1;
+    resizer.classList.add('active');
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'col-resize';
+  });
+
+  document.addEventListener('mousemove', e => {
+    if (!resizer.classList.contains('active')) return;
+    const dx = e.clientX - startX;
+    const totalW = left.offsetWidth + right.offsetWidth;
+    const newLeft = Math.max(0.1, startLeftFlex + (dx / totalW) * (startLeftFlex + startRightFlex));
+    const newRight = Math.max(0.1, startRightFlex - (dx / totalW) * (startLeftFlex + startRightFlex));
+    left.style.flex = newLeft;
+    right.style.flex = newRight;
+  });
+
+  document.addEventListener('mouseup', () => {
+    resizer.classList.remove('active');
+    document.body.style.userSelect = '';
+    document.body.style.cursor = '';
+  });
+}
+
+// Ctrl+Enter / Cmd+Enter to run
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    e.preventDefault();
+    runTransform();
+  }
+});
+
+// ─── BOOT ─────────────────────────────────────────────────────────────────────
+buildSampleSelect();
+loadSample();   // builds script dropdown, auto-selects first matching script, loads it
+makeResizable('r1', 'pane1', 'pane2');
+makeResizable('r2', 'pane2', 'pane3');
+setStatus('Ready — Ctrl+Enter to run');
+</script>
+</body>
+</html>
